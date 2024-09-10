@@ -77,12 +77,14 @@ def get_threshold_date(blame_timestamp, allowed_days):
         print(f"[ERROR] could not get_threshold_date: {e}")
         sys.exit(1)
 
+
 def run_reporting(results, dryrun):
     for r in sorted(results):
         print(r)
 
     if results and not dryrun:
         sys.exit(1)
+
 
 def run(config):
     try:
@@ -170,6 +172,7 @@ def list_files(file_patterns, directory_path, ignore_paths):
         print(f"[ERROR] list_files: {e}")
         sys.exit(1)
 
+
 def load_config(file_name):
     try:
         # set the defaults, allow local config to override
@@ -205,6 +208,10 @@ def load_config(file_name):
                         # Merge the default config with user config
                         # (user config takes precedence)
                         final_config = {**default_config, **user_config}
+                        if final_config["dryrun"]:
+                            print(
+                                f"[INFO] Running in 'dryrun: {final_config['dryrun']}' mode."
+                            )
 
                         return final_config
                 except FileNotFoundError:
