@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 
 # Add the directory containing chkexemp to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from chkexmp.main import (parse_blame_output, run_grep, run_git_blame, get_threshold_date, list_files, load_config, run_reporting)
+from chkexmpt.main import (parse_blame_output, run_grep, run_git_blame, get_threshold_date, list_files, load_config, run_reporting)
 
 def test_parse_blame_output():
     blame_output = "abc12345 (John Doe 2023-09-09 12:34:56 +0000 1) some code"

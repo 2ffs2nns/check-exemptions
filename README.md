@@ -8,6 +8,8 @@ This tool currently supports inline checkov exceptions, and diffs the timestamp 
 
 Run `pip install chkexmpt` to install `chkexmpt`.
 
+>NOTE: requires python >= 3.8 Tested on 3.8 and 3.12
+
 ## Usage
 
 Run `chkexmpt` to search all sub-directories for files containing security exceptions.
