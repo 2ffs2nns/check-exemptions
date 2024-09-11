@@ -10,19 +10,20 @@ from datetime import datetime, timedelta
 
 def parse_blame_output(blame_output, blame_pattern):
     try:
-        author = None
-        git_hash = None
-        timestamp = None
         timestamp_str = None
+        blame_attrs = {"git_hash": None, "author": None, "timestamp": None}
         match = re.match(blame_pattern, blame_output)
 
         if match:
-            git_hash = match.group(1)
-            author = match.group(2)
-            timestamp_str = match.group(3)
-            timestamp = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S %z")
+            blame_attrs["git_hash"] = match.group(1)
+            blame_attrs["author"] = match.group(2)
 
-        return git_hash, author, timestamp
+            timestamp_str = match.group(3)
+            blame_attrs["timestamp"] = datetime.strptime(
+                timestamp_str, "%Y-%m-%d %H:%M:%S %z"
+            )
+
+        return blame_attrs
 
     except Exception as e:
         print(f"[ERROR] could not parse_blame_output: {e}")
@@ -94,6 +95,7 @@ def run(config):
         directory_path = config["directory_path"]
         ignore_paths = config["ignore_paths"]
         dryrun = config["dryrun"]
+        approved_exemptions = config["approved_exemptions"]
 
         results = set()
         # for each tool, check for it's file patterns and matching
@@ -118,29 +120,38 @@ def run(config):
                         if grep_result == 0:
                             for line in grep_lines:
                                 line_number, line_comment = line.split(":", 1)
+                                line_comment = line_comment.lstrip().rstrip()
                                 blame_result, blame_output = run_git_blame(
                                     line_number, file_path
                                 )
 
                                 try:
                                     if blame_result == 0:
-                                        git_hash, author, blame_timestamp = (
-                                            parse_blame_output(
-                                                blame_output, blame_pattern
-                                            )
+                                        blame_attrs = parse_blame_output(
+                                            blame_output, blame_pattern
                                         )
-                                        if blame_timestamp:
-                                            # Filter if older than N days
+                                        if blame_attrs["timestamp"]:
+                                            # filter if older than N days
                                             threshold_date = get_threshold_date(
-                                                blame_timestamp, allowed_days
+                                                blame_attrs["timestamp"], allowed_days
                                             )
-                                            if blame_timestamp < threshold_date:
-                                                results.add(
-                                                    f"""
-{blame_timestamp}, {git_hash}, {author}
-{file_path}
-{line_number}, {line_comment.strip()}"""
+                                            if (
+                                                blame_attrs["timestamp"]
+                                                < threshold_date
+                                            ):
+                                                exemption = (
+                                                    f"{file_name},{line_number},{line_comment}"
                                                 )
+                                                # filter if approved
+                                                if exemption in approved_exemptions:
+                                                    next
+                                                else:
+                                                    results.add(
+                                                        f"""
+{blame_attrs['timestamp']}, {blame_attrs['git_hash']}, {blame_attrs['author']}
+{file_path}
+{file_name},{line_number},{line_comment}"""
+                                                    )
                                 except Exception as e:
                                     print(f"[ERROR] parse_blame_output: {e}")
                     finally:
@@ -181,6 +192,7 @@ def load_config(file_name):
             "directory_path": os.getcwd(),
             "dryrun": False,
             "ignore_paths": [".terraform"],
+            "approved_exemptions": [],
             # below not surfaced to user_configs
             "git_blame_pattern": rf"(\w{{8}}) \((.*?) (\d{{4}}-\d{{2}}-\d{{2}} \d{{2}}:\d{{2}}:\d{{2}} [-+]\d{{4}}) .*?\)\s+",
             "tool_patterns": [
