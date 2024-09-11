@@ -11,20 +11,21 @@ from chkexmpt.main import (parse_blame_output, run_grep, run_git_blame, get_thre
 def test_parse_blame_output():
     blame_output = "abc12345 (John Doe 2023-09-09 12:34:56 +0000 1) some code"
     blame_pattern = r"(\w{8}) \((.*?) (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [-+]\d{4})"
-    git_hash, author, timestamp = parse_blame_output(blame_output, blame_pattern)
+    # git_hash, author, timestamp = parse_blame_output(blame_output, blame_pattern)
+    blame_attrs = parse_blame_output(blame_output, blame_pattern)
     
-    assert git_hash == "abc12345"
-    assert author == "John Doe"
-    assert timestamp == datetime(2023, 9, 9, 12, 34, 56, tzinfo=timezone.utc)
+    assert blame_attrs['git_hash'] == "abc12345"
+    assert blame_attrs['author'] == "John Doe"
+    assert blame_attrs['timestamp'] == datetime(2023, 9, 9, 12, 34, 56, tzinfo=timezone.utc)
 
 def test_parse_blame_output_no_match():
     blame_output = "no match here"
     blame_pattern = r"(\w{8}) \((.*?) (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [-+]\d{4})"
-    git_hash, author, timestamp = parse_blame_output(blame_output, blame_pattern)
+    blame_attrs = parse_blame_output(blame_output, blame_pattern)
     
-    assert git_hash is None
-    assert author is None
-    assert timestamp is None
+    assert blame_attrs['git_hash'] is None
+    assert blame_attrs['author'] is None
+    assert blame_attrs['timestamp'] is None
 
 @mock.patch("subprocess.run")
 def test_run_grep(mock_subprocess_run):
@@ -76,6 +77,7 @@ def test_load_config(mock_exists, mock_open):
     
     assert config["allowed_days"] == 10
     assert config["ignore_paths"] == [".terraform"]
+    assert config["approved_exemptions"] == []
 
 def test_run_reporting_dryrun():
     results = {"result1", "result2"}
