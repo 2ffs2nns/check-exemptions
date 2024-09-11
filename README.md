@@ -40,7 +40,7 @@ approved_exemptions:
   - "<fileName>,<lineNumber>,<lineComment>"
 ```
 
-An example `.chkexmpt.yml' could look like
+An example `.chkexmpt.yml` could look like
 
 ```yaml
 allowed_days: 30
